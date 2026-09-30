@@ -9,8 +9,16 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 
 
 def calculate_metrics(y_true, y_pred):
-    """Calculate classification metrics."""
+    """
+    Calculate accuracy and F1 classification metrics.
 
+    Args:
+        y_true: True class labels.
+        y_pred: Predicted class labels.
+
+    Returns:
+        Dictionary containing accuracy, macro-F1, and weighted-F1 scores.
+    """
     accuracy = accuracy_score(
         y_true,
         y_pred
@@ -44,17 +52,21 @@ def repeated_cv_error(
     random_state=42,
 ):
     """
-    Perform repeated stratified cross-validation.
+    Evaluate a model using repeated stratified cross-validation.
+
+    Args:
+        X: Feature matrix.
+        y: Target labels.
+        model_factory: Function that creates a fresh model for each fold.
+        n_splits: Number of folds in each cross-validation repetition.
+        n_repeats: Number of cross-validation repetitions.
+        random_state: Seed used for reproducible splitting.
 
     Returns:
-        Dictionary containing:
-        - fold accuracies
-        - fold macro-F1 scores
-        - mean/std accuracy
-        - mean/std macro-F1
-        - confusion matrix
+        Dictionary containing fold-level accuracy and macro-F1 scores,
+        their means and standard deviations, the aggregated confusion
+        matrix, and the corresponding class labels.
     """
-
     cv = RepeatedStratifiedKFold(
         n_splits=n_splits,
         n_repeats=n_repeats,
@@ -71,14 +83,13 @@ def repeated_cv_error(
         cv.split(X, y),
         start=1
     ):
-
         X_train = X[train_idx]
         X_test = X[test_idx]
 
         y_train = y[train_idx]
         y_test = y[test_idx]
 
-        # Create a fresh model for every fold
+        # Create a fresh model for every fold.
         model = model_factory()
 
         model.fit(
@@ -123,7 +134,6 @@ def repeated_cv_error(
             f"Macro-F1 = {macro_f1:.4f}"
         )
 
-    # Convert to numpy arrays
     accuracies = np.array(
         accuracies
     )
@@ -132,7 +142,6 @@ def repeated_cv_error(
         macro_f1_scores
     )
 
-    # Aggregate confusion matrix
     labels = np.unique(y)
 
     cm = confusion_matrix(
@@ -144,24 +153,12 @@ def repeated_cv_error(
     results = {
         "accuracies": accuracies,
         "macro_f1_scores": macro_f1_scores,
-
-        "accuracy_mean":
-            accuracies.mean(),
-
-        "accuracy_std":
-            accuracies.std(),
-
-        "macro_f1_mean":
-            macro_f1_scores.mean(),
-
-        "macro_f1_std":
-            macro_f1_scores.std(),
-
-        "confusion_matrix":
-            cm,
-
-        "labels":
-            labels,
+        "accuracy_mean": accuracies.mean(),
+        "accuracy_std": accuracies.std(),
+        "macro_f1_mean": macro_f1_scores.mean(),
+        "macro_f1_std": macro_f1_scores.std(),
+        "confusion_matrix": cm,
+        "labels": labels,
     }
 
     return results

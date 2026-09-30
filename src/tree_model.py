@@ -6,13 +6,17 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 def get_pruning_path(X, y, random_state=42):
     """
-    Compute the cost-complexity pruning path.
+    Compute the cost-complexity pruning path for a decision tree.
+
+    Args:
+        X: Feature matrix.
+        y: Target labels.
+        random_state: Seed for reproducible tree construction.
 
     Returns:
-        ccp_alphas: Candidate pruning strengths.
-        impurities: Total leaf impurities for each alpha.
+        Tuple containing candidate pruning strengths and
+        corresponding total leaf impurities.
     """
-
     tree = DecisionTreeClassifier(
         random_state=random_state
     )
@@ -32,13 +36,18 @@ def evaluate_pruning_alphas(
     random_state=42
 ):
     """
-    Evaluate every pruning alpha using stratified K-fold CV.
+    Evaluate pruning strengths using stratified K-fold cross-validation.
+
+    Args:
+        X: Feature matrix.
+        y: Target labels.
+        ccp_alphas: Candidate cost-complexity pruning strengths.
+        cv_splits: Number of stratified cross-validation folds.
+        random_state: Seed for reproducible splitting.
 
     Returns:
-        means: Mean CV error for each alpha.
-        ses: Standard error for each alpha.
+        Tuple containing mean CV error and standard error for each alpha.
     """
-
     cv = StratifiedKFold(
         n_splits=cv_splits,
         shuffle=True,
@@ -49,7 +58,6 @@ def evaluate_pruning_alphas(
     ses = []
 
     for alpha in ccp_alphas:
-
         tree = DecisionTreeClassifier(
             ccp_alpha=alpha,
             random_state=random_state
@@ -68,7 +76,7 @@ def evaluate_pruning_alphas(
 
         mean_error = np.mean(errors)
 
-        # Standard error = std / sqrt(number of folds)
+        # Standard error = standard deviation / sqrt(number of folds).
         standard_error = np.std(
             errors,
             ddof=1
@@ -87,19 +95,20 @@ def choose_alpha(
     rule="min"
 ):
     """
-    Select pruning alpha using either:
+    Select a pruning alpha using the minimum-error or 1-SE rule.
 
-    rule="min":
-        Alpha with minimum CV error.
-
-    rule="1se":
-        Largest alpha whose error is within
-        one standard error of the minimum.
+    Args:
+        ccp_alphas: Candidate pruning strengths.
+        means: Mean CV error for each alpha.
+        ses: Standard error for each alpha.
+        rule: Selection rule, either "min" or "1se".
 
     Returns:
-        Selected alpha.
-    """
+        Selected pruning alpha.
 
+    Raises:
+        ValueError: If rule is not "min" or "1se".
+    """
     ccp_alphas = np.asarray(ccp_alphas)
     means = np.asarray(means)
     ses = np.asarray(ses)
@@ -107,11 +116,9 @@ def choose_alpha(
     best_index = np.argmin(means)
 
     if rule == "min":
-
         return ccp_alphas[best_index]
 
     elif rule == "1se":
-
         best_error = means[best_index]
         best_se = ses[best_index]
 
@@ -121,7 +128,7 @@ def choose_alpha(
             means <= threshold
         )[0]
 
-        # Largest alpha = simplest tree
+        # Largest alpha corresponds to the simplest tree.
         return ccp_alphas[valid[-1]]
 
     else:
@@ -137,9 +144,17 @@ def train_tree(
     random_state=42
 ):
     """
-    Train a decision tree with the supplied pruning strength.
-    """
+    Train a decision tree using the supplied pruning strength.
 
+    Args:
+        X: Feature matrix.
+        y: Target labels.
+        ccp_alpha: Cost-complexity pruning strength.
+        random_state: Seed for reproducible tree construction.
+
+    Returns:
+        Trained DecisionTreeClassifier.
+    """
     tree = DecisionTreeClassifier(
         ccp_alpha=ccp_alpha,
         random_state=random_state
@@ -152,9 +167,15 @@ def train_tree(
 
 def tree_statistics(tree):
     """
-    Return basic structural statistics of a trained tree.
-    """
+    Get basic structural statistics from a trained decision tree.
 
+    Args:
+        tree: Trained DecisionTreeClassifier.
+
+    Returns:
+        Dictionary containing tree depth, number of leaves,
+        and total number of nodes.
+    """
     return {
         "depth": tree.get_depth(),
         "leaves": tree.get_n_leaves(),
@@ -164,9 +185,14 @@ def tree_statistics(tree):
 
 def get_feature_importances(tree):
     """
-    Return feature importance values from a trained tree.
-    """
+    Get feature importance values from a trained decision tree.
 
+    Args:
+        tree: Trained DecisionTreeClassifier.
+
+    Returns:
+        Array containing the importance of each feature.
+    """
     return tree.feature_importances_
 
 
@@ -176,13 +202,16 @@ def get_top_features(
     n=5
 ):
     """
-    Return the top n most important features.
+    Get the top n non-zero feature importances.
+
+    Args:
+        tree: Trained DecisionTreeClassifier.
+        feature_names: Names corresponding to the tree features.
+        n: Maximum number of features to return.
 
     Returns:
-        List of tuples:
-        [(feature_name, importance), ...]
+        List of tuples containing feature names and importance values.
     """
-
     importances = tree.feature_importances_
 
     indices = np.argsort(importances)[::-1]
@@ -190,7 +219,6 @@ def get_top_features(
     results = []
 
     for index in indices:
-
         if importances[index] <= 0:
             continue
 

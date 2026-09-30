@@ -2,33 +2,33 @@ import pandas as pd
 import numpy as np
 
 
-# ============================================================
-# LOAD DATA
-# ============================================================
-
 def load_data(train_path, validation_path):
     """
-    Load training and validation CSV files.
+    Load training and validation datasets from CSV files.
+
+    Args:
+        train_path: Path to the training CSV file.
+        validation_path: Path to the validation CSV file.
 
     Returns:
-        train_df, validation_df
+        Tuple containing the training and validation DataFrames.
     """
-
     train_df = pd.read_csv(train_path)
     validation_df = pd.read_csv(validation_path)
 
     return train_df, validation_df
 
 
-# ============================================================
-# WAP COLUMN FUNCTIONS
-# ============================================================
-
 def get_wap_columns(df):
     """
-    Return all WiFi Access Point (WAP) feature columns.
-    """
+    Get all WiFi Access Point (WAP) feature columns.
 
+    Args:
+        df: Input dataset containing WAP columns.
+
+    Returns:
+        List of column names starting with 'WAP'.
+    """
     return [
         col for col in df.columns
         if col.startswith("WAP")
@@ -37,12 +37,14 @@ def get_wap_columns(df):
 
 def get_active_wap_columns(train_df):
     """
-    Return WAP columns that are active in the training dataset.
+    Get WAP columns containing at least one detected signal.
 
-    A WAP containing only value 100 means that it was never detected
-    and therefore contains no useful information.
+    Args:
+        train_df: Training DataFrame containing WAP features.
+
+    Returns:
+        List of WAP columns that contain at least one value other than 100.
     """
-
     wap_cols = get_wap_columns(train_df)
 
     active_waps = [
@@ -54,23 +56,19 @@ def get_active_wap_columns(train_df):
     return active_waps
 
 
-# ============================================================
-# RSSI CLEANING
-# ============================================================
-
 def clean_rssi(df, wap_cols, fill=-105):
     """
-    Replace RSSI value 100, which means 'not detected',
-    with a weak signal value.
+    Replace undetected RSSI values with a weak signal value.
 
-    Default:
-        100 -> -105
+    Args:
+        df: Input DataFrame containing RSSI features.
+        wap_cols: List of WAP feature column names.
+        fill: Value used to replace undetected signals.
 
-    Actual detected RSSI range is approximately -104 to 0.
+    Returns:
+        DataFrame containing cleaned RSSI features.
     """
-
     X = df[wap_cols].copy()
-
     X = X.replace(100, fill)
 
     return X
@@ -78,38 +76,34 @@ def clean_rssi(df, wap_cols, fill=-105):
 
 def clean_rssi_nan(df, wap_cols):
     """
-    Replace RSSI value 100 with NaN.
+    Replace undetected RSSI values with NaN.
 
-    Used for experiments where the model/preprocessing
-    explicitly handles missing values.
+    Args:
+        df: Input DataFrame containing RSSI features.
+        wap_cols: List of WAP feature column names.
+
+    Returns:
+        DataFrame containing RSSI features with missing values as NaN.
     """
-
     X = df[wap_cols].copy()
-
     X = X.replace(100, np.nan)
 
     return X
 
 
-# ============================================================
-# SPLIT BY BUILDING
-# ============================================================
-
 def split_by_building(df, wap_cols, building_id, fill=-105):
     """
-    Extract RSSI features and FLOOR labels for one building.
+    Extract cleaned RSSI features and floor labels for one building.
 
-    Parameters:
-        df          : complete dataframe
-        wap_cols    : list of WAP column names
-        building_id : building to select
-        fill        : value used to replace missing RSSI
+    Args:
+        df: Complete dataset.
+        wap_cols: List of WAP feature column names.
+        building_id: Building identifier to select.
+        fill: Value used to replace undetected RSSI signals.
 
     Returns:
-        X : cleaned RSSI features
-        y : floor labels
+        Tuple containing the cleaned RSSI features and floor labels.
     """
-
     building_df = df[
         df["BUILDINGID"] == building_id
     ].copy()
@@ -127,10 +121,16 @@ def split_by_building(df, wap_cols, building_id, fill=-105):
 
 def split_by_building_nan(df, wap_cols, building_id):
     """
-    Extract RSSI features and FLOOR labels for one building
-    while preserving missing RSSI values as NaN.
-    """
+    Extract RSSI features and floor labels while preserving missing values.
 
+    Args:
+        df: Complete dataset.
+        wap_cols: List of WAP feature column names.
+        building_id: Building identifier to select.
+
+    Returns:
+        Tuple containing RSSI features with NaN values and floor labels.
+    """
     building_df = df[
         df["BUILDINGID"] == building_id
     ].copy()
