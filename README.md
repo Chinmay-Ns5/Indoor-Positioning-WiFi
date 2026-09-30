@@ -417,4 +417,6 @@ contains the numerical results from:
 ## Team
 
 - **Member 1:** Chinmay N S
+- **SRN 1:** PES2UG24AM047
 - **Member 2:** KOUSHIK
+- **SRN 2:** PES2UG24AM076
