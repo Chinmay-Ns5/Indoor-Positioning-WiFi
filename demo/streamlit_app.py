@@ -40,7 +40,14 @@ st.markdown(
     [data-testid="stSidebar"] { background: #202b27; }
     [data-testid="stSidebar"] * { color: #eef3ef; }
     [data-testid="stMetric"] { background: #ffffff; border: 1px solid #dce4dd; padding: 14px 16px; border-radius: 6px; }
-    [data-testid="stMetricLabel"] { color: #56665e; }
+    [data-testid="stMetric"] [data-testid="stMetricLabel"],
+    [data-testid="stMetric"] [data-testid="stMetricValue"],
+    [data-testid="stMetric"] [data-testid="stMetricDelta"] { color: #1c2924 !important; }
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+    .stApp label {
+        color: #1c2924;
+    }
+    .stApp [data-testid="stCaptionContainer"] p { color: #46554e; }
     .stButton > button[kind="primary"] { background: #176b52; border-color: #176b52; }
     .stButton > button[kind="primary"]:hover { background: #10543f; border-color: #10543f; }
     div[data-testid="stAlert"] { border-radius: 5px; }
